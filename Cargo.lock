@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "CompetEasy"
+name = "compet_easy"
 version = "0.1.0"
