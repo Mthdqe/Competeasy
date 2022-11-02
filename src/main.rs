@@ -46,6 +46,33 @@ impl<'a> Worker<'a> {
             println!("{team_rank} {team_name}");
         }
     }
+
+    fn scrap_matchs(&self, team_name: &str) {
+        let match_table = self.document.select(&self.table).nth(MATCH_TABLE).unwrap();
+        let match_lines = match_table.select(&self.tr);
+
+        for match_line in match_lines {
+            let line_elts: Vec<scraper::ElementRef> = match_line.select(&self.td).collect();
+
+            if line_elts.len() > 1 {
+                let date = line_elts[1].inner_html();
+                let hour = line_elts[2].inner_html();
+                let team_1 = line_elts[3].inner_html();
+                let team_2 = line_elts[5].inner_html();
+                let place = line_elts[7].inner_html();
+
+                if (team_1 == team_name || team_2 == team_name)
+                    && (team_1 != "xxxxx" && team_2 != "xxxxx")
+                {
+                    println!("[{team_1} VS {team_2}]");
+                    println!("Date: {date}");
+                    println!("Heure: {hour}");
+                    println!("Lieu: {place}");
+                    println!("\n");
+                }
+            }
+        }
+    }
 }
 
 fn main() {
@@ -57,4 +84,6 @@ fn main() {
     */
     let worker = Worker::new(ffvb_uri);
     worker.scrap_ranks();
+    worker.scrap_matchs("C S M CLAMART 2");
+    worker.scrap_matchs("UGS DRAVEIL JUVISY ATHIS-MONS VOLLEY-BALL");
 }
