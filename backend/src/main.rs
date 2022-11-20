@@ -13,7 +13,9 @@ async fn get_matchs(path: web::Path<String>) -> impl Responder {
     let team: String = path.into_inner();
     let worker: Worker = Worker::new(ffvb_uri).await;
     let matchs_serialized: String = serde_json::to_string(&worker.scrap_matchs(&team)).unwrap();
-    HttpResponse::Ok().body(matchs_serialized)
+    HttpResponse::Ok()
+        .append_header(("Access-Control-Allow-Origin", "http://localhost:5173"))
+        .body(matchs_serialized)
 }
 
 #[actix_web::main]
