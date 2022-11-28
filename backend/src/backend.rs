@@ -33,6 +33,21 @@ pub struct Worker<'a> {
 }
 
 /**
+ * @brief Structure that hold a score
+ */
+#[derive(Serialize, Deserialize)]
+pub struct Score {
+    lhs: u8,
+    rhs: u8,
+}
+
+impl Score {
+    pub fn new(lhs: u8, rhs: u8) -> Score {
+        Score { lhs, rhs }
+    }
+}
+
+/**
  * @brief Structure that holds a match
  */
 #[derive(Serialize, Deserialize)]
@@ -42,6 +57,8 @@ pub struct Match {
     date: String,
     hour: String,
     place: String,
+    match_score: Score,
+    sets_score: Vec<Score>,
 }
 
 impl<'a> Worker<'a> {
@@ -92,30 +109,50 @@ impl<'a> Worker<'a> {
      * @param team_name The team to get the match from
      */
     pub fn scrap_matchs(&self, team_name: &str) -> Vec<Match> {
+        /* Scrap the match table */
         let match_table = self.document.select(&self.table).nth(MATCH_TABLE).unwrap();
+
+        /* Scrap the matchs lines */
         let match_lines = match_table.select(&self.tr);
+
+        /* Create a vector of match to be returned */
         let mut matchs: Vec<Match> = Vec::new();
 
+        /* Loop other the different matchs */
         for match_line in match_lines {
+            /* Scrap the lines */
             let line_elts: Vec<scraper::ElementRef> = match_line.select(&self.td).collect();
 
+            /* Little check to see if the line really describe a match */
             if line_elts.len() > 1 {
-                let date = line_elts[1].inner_html();
-                let hour = line_elts[2].inner_html();
-                let first_team = line_elts[3].inner_html();
-                let second_team = line_elts[5].inner_html();
-                let place = line_elts[7].inner_html();
+                /* Initialize a match */
+                let mut m: Match = Match {
+                    date: line_elts[1].inner_html(),
+                    hour: line_elts[2].inner_html(),
+                    first_team: line_elts[3].inner_html(),
+                    second_team: line_elts[5].inner_html(),
+                    place: String::new(),
+                    match_score: Score::new(0, 0),
+                    sets_score: vec![],
+                };
 
-                if (first_team == team_name || second_team == team_name)
-                    && (first_team != "xxxxx" && second_team != "xxxxx")
+                /* Try to parse the 6th and 7th element of the line.
+                 * If the parsing succeed, it means that the match is already
+                 * done. So we set the score of the match. Otherwise we set the
+                 * place of the match.
+                 */
+                let parse_lhs = line_elts[6].inner_html().trim().parse::<u8>();
+                let parse_rhs = line_elts[7].inner_html().trim().parse::<u8>();
+                match parse_lhs {
+                    Ok(lhs) => m.match_score = Score::new(lhs, parse_rhs.unwrap()),
+                    Err(_e) => m.place = line_elts[7].inner_html(),
+                }
+
+                /* Check if we have to add this match to the match list */
+                if (m.first_team == team_name || m.second_team == team_name)
+                    && (m.first_team != "xxxxx" && m.second_team != "xxxxx")
                 {
-                    matchs.push(Match {
-                        first_team,
-                        second_team,
-                        date,
-                        hour,
-                        place,
-                    });
+                    matchs.push(m);
                 }
             }
         }

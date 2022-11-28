@@ -1,0 +1,10 @@
+html {
+    background-color: var(--bg);
+    color: var(--fg);
+}
+
+:root {
+    --bg: #212121;
+    --fg: #dbdbdb;
+    --blue: #2f819c;
+}

@@ -2,12 +2,13 @@
   import Match from "./components/Match.svelte";
 
   class Match_ {
-    constructor(first_team, second_team, date, hour, place) {
+    constructor(first_team, second_team, date, hour, place, match_score) {
       this.first_team = first_team;
       this.second_team = second_team;
       this.date = date;
       this.hour = hour;
       this.place = place;
+      this.match_score = match_score;
     }
   }
 
@@ -42,14 +43,28 @@
         date={match.date}
         hour={match.hour}
         place={match.place}
+        match_score={match.match_score}
       />
     {/each}
   </div>
 </main>
 
 <style>
+  main {
+    width: 1200px;
+    margin: auto;
+  }
+
   #list {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  #input {
+    display: flex;
+    justify-content: center;
+    width: 300px;
+    margin: auto;
   }
 </style>

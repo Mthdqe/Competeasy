@@ -1,25 +1,31 @@
 <script>
-    export let first_team = "DJAM";
-    export let second_team = "CLAMART2";
-    export let date = "19/11/2022";
-    export let hour = "20:30";
-    export let place = "GYMNASE DE LA CITADELLE";
+    export let first_team = "";
+    export let second_team = "";
+    export let date = "";
+    export let hour = "";
+    export let place = "";
+    export let match_score = { lhs: 0, rhs: 0 };
 </script>
 
 <div>
     <h2>{first_team} - {second_team}</h2>
     <p><span>Date:</span> {date}</p>
     <p><span>Heure:</span> {hour}</p>
-    <p><span>Lieu:</span> {place}</p>
+    {#if place === ""}
+        <p><span>Score:</span> {match_score.lhs} - {match_score.rhs}</p>
+    {:else}
+        <p><span>Lieu:</span> {place}</p>
+    {/if}
 </div>
 
 <style>
     div {
         display: inline-block;
         width: 400px;
-        background-color: #e5a50a;
+        background-color: var(--blue);
         margin: 15px;
         padding: 10px;
+        border-radius: 10px;
     }
 
     div h2 {
@@ -29,10 +35,11 @@
     }
 
     div p {
-        color: white;
+        color: var(--fg);
     }
 
     div span {
+        font-weight: bold;
         text-decoration: underline;
     }
 </style>
