@@ -1,6 +1,7 @@
 pub mod backend;
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 use backend::Worker;
+pub mod scrap;
 
 /* Hello endpoint (Testing purposes) */
 #[get("/hello")]
