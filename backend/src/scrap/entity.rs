@@ -31,25 +31,53 @@ impl Competition {
         }
     }
 }
-
 /* -------------------------------------------------------------------------- */
-/** \struct Zone
- *  \brief  Entity describing a scraped zone
+/** \struct Department
+ *  \brief  Entity describing a scraped department
  */
 #[derive(PartialEq, Getters)]
-pub struct Zone {
-    name: String, /*< The name of the zone */
+pub struct Department {
+    region_name: String, /* Name of the region it belongs */
+    name: String,        /*< The name of the department */
+    url: String,         /*< Url of the pools of the department */
 }
 
-impl Zone {
+impl Department {
     /**
-     * \brief Constructor of the Zone entity
-     * \param name Name of the zone
-     * \param url The matching url of the zone web page
+     * \brief Constructor of the department entity
+     * \param region_name Name of the belonging region
+     * \param name Name of the department
+     * \param url The matching url of the department pools
      */
-    pub fn new(name: &str) -> Zone {
-        Zone {
+    pub fn new(region_name: &str, name: &str, url: &str) -> Department {
+        Department {
+            region_name: String::from(name),
             name: String::from(name),
+            url: String::from(url),
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/** \struct Region
+ *  \brief  Entity describing a scraped region
+ */
+#[derive(PartialEq, Getters)]
+pub struct Region {
+    name: String, /*< The name of the region */
+    url: String,  /*< Url of the pools */
+}
+
+impl Region {
+    /**
+     * \brief Constructor of the Region entity
+     * \param name Name of the Region
+     * \param url The url of the pools of this region
+     */
+    pub fn new(name: &str, url: &str) -> Region {
+        Region {
+            name: String::from(name),
+            url: String::from(url),
         }
     }
 }
