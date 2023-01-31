@@ -37,21 +37,18 @@ impl Competition {
  */
 #[derive(PartialEq, Getters)]
 pub struct Department {
-    region_name: String, /* Name of the region it belongs */
-    name: String,        /*< The name of the department */
-    url: String,         /*< Url of the pools of the department */
+    name: String, /*< The name of the department */
+    url: String,  /*< Url of the pools of the department */
 }
 
 impl Department {
     /**
      * \brief Constructor of the department entity
-     * \param region_name Name of the belonging region
      * \param name Name of the department
      * \param url The matching url of the department pools
      */
-    pub fn new(region_name: &str, name: &str, url: &str) -> Department {
+    pub fn new(name: &str, url: &str) -> Department {
         Department {
-            region_name: String::from(name),
             name: String::from(name),
             url: String::from(url),
         }

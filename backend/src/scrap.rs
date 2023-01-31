@@ -156,6 +156,36 @@ pub async fn scrap_regions(competition: &entity::Competition) -> Vec<entity::Reg
 }
 
 /**
+ * \brief  Scrap the departments of the given competition in the given region
+ * \param  competition The Competition from which scrap the departments
+ * \param  region The region from which scrap the departements
+ * \return Vec<entity::Department> The list of scraped departments
+ */
+pub async fn scrap_departments(
+    competition: &entity::Competition,
+    region: &entity::Region,
+) -> Vec<String> {
+    /* Instanciate the vector of departments */
+    let mut departs: Vec<entity::Department> = Vec::new();
+
+    /* Instnaciate the scraper */
+    let scraper: Scraper = Scraper::new(competition.url()).await;
+
+    /* Scrap the different region names */
+    let region_names: Vec<String> = scraper.scrap_sequence("thead tr td", HtmlType::InnerHtml);
+
+    /* Find the index of the region in the different tables */
+    let region_index: usize = region_names
+        .iter()
+        .position(|x| x == region.name())
+        .unwrap();
+
+    let departments: Vec<String> = scraper.scrap_sequence("tbody tr td table", HtmlType::InnerHtml);
+
+    departments
+}
+
+/**
  * \brief Scrap the different
  */
 /* ------------------------------------------------------------------------- */
@@ -184,12 +214,19 @@ mod tests {
         )));
     }
 
-    /*
     #[actix_web::test]
-    async fn test_regions_scrap() {
+    async fn test_departments_scrap() {
+        println!("Allooo");
         let competition: entity::Competition =
             entity::Competition::new(constant::CHAMP_DEP, constant::CHAMP_DEP_URL);
 
+        let region: entity::Region = entity::Region::new("CORSE", "");
+
+        let departs = scrap_departments(&competition, &region).await;
+        println!("{:?}", departs);
+
+        assert!(true);
+        /*
         let zones: Vec<entity::Region> = scrap_zones(&competition).await;
 
         assert_eq!(zones.len(), 18);
@@ -212,8 +249,8 @@ mod tests {
         assert!(zones.contains(&entity::Zone::new("OCCITANIE")));
         assert!(zones.contains(&entity::Zone::new("PAYS DE LA LOIRE")));
         assert!(zones.contains(&entity::Zone::new("PROVENCE-ALPES-CÔTE D’AZUR")));
+        */
     }
-    */
 
     #[actix_web::test]
     #[should_panic]
