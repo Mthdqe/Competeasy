@@ -14,6 +14,8 @@ use reqwest::*;
 use scraper::html::*;
 use scraper::*;
 
+use self::entity::Department;
+
 /* ------------------------------------------------------------------------- */
 /** \enum  HtmlType
  *  \brief Enumerate the different kind of values that can be scraped from html
@@ -46,11 +48,19 @@ impl Scraper {
         let client: Client = builder.build().unwrap();
 
         /* Get the html content as a String and block to avoid async */
-        let html = client.get(uri).send().await.unwrap().text().await.unwrap();
+        let html: String = client.get(uri).send().await.unwrap().text().await.unwrap();
 
         Scraper {
             doc: Html::parse_document(&html), /* Parse the html document */
         }
+    }
+
+    /**
+     * \brief Replace the actual doc of the scraper by a fragment of Html
+     * \param fragment The fragment of html to parse that will replace the actual doc
+     */
+    pub fn new_fragment(&mut self, fragment: &String) {
+        self.doc = Html::parse_fragment(fragment);
     }
 
     /**
@@ -63,19 +73,21 @@ impl Scraper {
     }
 
     /**
-     *  \brief
+     *  \brief Parse the href value of an ElementRef
+     *  \param elt_ref The ElementRef to parse
+     *  \return String The href value of the ElementRef
      */
     fn parse_href(elt_ref: &ElementRef) -> String {
         String::from(elt_ref.value().attr("href").unwrap())
     }
 
     /**
-     * \brief  Scrap the sequence and gets the inner html content
+     * \brief  Scrap the sequence and gets the asked value
      * \param  sequence The sequence to parse from the document
      * \param  html_type The type of value we want to scrap
      * \return Vec<String> The list of content parsed from the sequence
      */
-    pub fn scrap_sequence(&self, sequence: &str, html_type: HtmlType) -> Vec<String> {
+    pub fn scrap_value(&self, sequence: &str, html_type: HtmlType) -> Vec<String> {
         /* Create the selector of the given sequence */
         let selector: Selector = Selector::parse(sequence).unwrap();
 
@@ -91,6 +103,15 @@ impl Scraper {
             .select(&selector)
             .map(|x| parsing_func(x))
             .collect()
+    }
+
+    /**
+     * \brief  Scrap the sequence and returns the sraped selector
+     * \param  sequence The sequence to parse from the document
+     * \return Selector The scraped selector to pursue the scraping
+     */
+    pub fn scrap(&self, sequence: &str) -> Selector {
+        Selector::parse(sequence).unwrap()
     }
 }
 
@@ -130,11 +151,6 @@ pub fn scrap_competitions() -> Vec<entity::Competition> {
  * \return Vec<entity::Region> The list of the regions of the matching competition
  */
 pub async fn scrap_regions(competition: &entity::Competition) -> Vec<entity::Region> {
-    /* Error management */
-    if competition.name() == constant::CHAMP_NAT || competition.name() == constant::CHAMP_DEP {
-        panic!();
-    }
-
     /* Instanciate the return vector */
     let mut regions: Vec<entity::Region> = Vec::new();
 
@@ -142,10 +158,10 @@ pub async fn scrap_regions(competition: &entity::Competition) -> Vec<entity::Reg
     let scraper: Scraper = Scraper::new(competition.url()).await;
 
     /* Scrap the region names */
-    let names: Vec<String> = scraper.scrap_sequence("thead tr td", HtmlType::InnerHtml);
+    let names: Vec<String> = scraper.scrap_value("thead tr td", HtmlType::InnerHtml);
 
     /* Scrap the region pools url */
-    let pools: Vec<String> = scraper.scrap_sequence("tbody tr td ul li a", HtmlType::Href);
+    let pools: Vec<String> = scraper.scrap_value("tbody tr td ul li a", HtmlType::Href);
 
     /* Build the vector of regions */
     for i in 0..std::cmp::min(names.len(), pools.len()) {
@@ -164,25 +180,41 @@ pub async fn scrap_regions(competition: &entity::Competition) -> Vec<entity::Reg
 pub async fn scrap_departments(
     competition: &entity::Competition,
     region: &entity::Region,
-) -> Vec<String> {
+) -> Vec<entity::Department> {
     /* Instanciate the vector of departments */
     let mut departs: Vec<entity::Department> = Vec::new();
 
-    /* Instnaciate the scraper */
-    let scraper: Scraper = Scraper::new(competition.url()).await;
+    /* Instanciate the scraper */
+    let mut scraper: Scraper = Scraper::new(competition.url()).await;
 
     /* Scrap the different region names */
-    let region_names: Vec<String> = scraper.scrap_sequence("thead tr td", HtmlType::InnerHtml);
+    let region_names: Vec<String> = scraper.scrap_value("thead tr td", HtmlType::InnerHtml);
 
     /* Find the index of the region in the different tables */
     let region_index: usize = region_names
         .iter()
-        .position(|x| x == region.name())
+        .position(|x| x.eq(region.name()))
         .unwrap();
 
-    let departments: Vec<String> = scraper.scrap_sequence("tbody tr td table", HtmlType::InnerHtml);
+    /* Scrap the content of each region */
+    let region_departs: Vec<String> =
+        scraper.scrap_value("table tbody tr td ul", HtmlType::InnerHtml);
 
-    departments
+    /* Update the document to scrap to be the part of the document holding the department names */
+    scraper.new_fragment(&region_departs[region_index]);
+
+    /* Scrap the departments names of the region */
+    let depart_name: Vec<String> = scraper.scrap_value("li a", HtmlType::InnerHtml);
+
+    /* Scrap the departments urls of the region */
+    let depart_urls: Vec<String> = scraper.scrap_value("li a", HtmlType::Href);
+
+    /* Build the department vector */
+    for i in 0..depart_name.len() {
+        departs.push(Department::new(&depart_name[i], &depart_urls[i]));
+    }
+
+    departs
 }
 
 /**
@@ -220,54 +252,50 @@ mod tests {
         let competition: entity::Competition =
             entity::Competition::new(constant::CHAMP_DEP, constant::CHAMP_DEP_URL);
 
-        let region: entity::Region = entity::Region::new("CORSE", "");
+        let region: Vec<entity::Region> = scrap_regions(&competition).await;
+        let departs: Vec<entity::Department> = scrap_departments(&competition, &region[0]).await;
 
-        let departs = scrap_departments(&competition, &region).await;
-        println!("{:?}", departs);
+        assert_eq!(departs.len(), 8);
 
-        assert!(true);
-        /*
-        let zones: Vec<entity::Region> = scrap_zones(&competition).await;
+        assert!(departs.contains(&entity::Department::new(
+            "01 Ain",
+            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTRA01"
+        )));
 
-        assert_eq!(zones.len(), 18);
+        assert!(departs.contains(&entity::Department::new(
+            "07/26 Drôme-Ardèche",
+            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTRA26"
+        )));
 
-        assert!(zones.contains(&entity::Zone::new("AUVERGNE-RHÔNE-ALPES")));
-        assert!(zones.contains(&entity::Zone::new("BOURGOGNE-FRANCHE-COMTE")));
-        assert!(zones.contains(&entity::Zone::new("BRETAGNE")));
-        assert!(zones.contains(&entity::Zone::new("CENTRE-VAL DE LOIRE")));
-        assert!(zones.contains(&entity::Zone::new("CORSE")));
-        assert!(zones.contains(&entity::Zone::new("GRAND EST")));
-        assert!(zones.contains(&entity::Zone::new("GUADELOUPE")));
-        assert!(zones.contains(&entity::Zone::new("GUYANE")));
-        assert!(zones.contains(&entity::Zone::new("HAUTS-DE-FRANCE")));
-        assert!(zones.contains(&entity::Zone::new("ILE-DE-FRANCE")));
-        assert!(zones.contains(&entity::Zone::new("LA REUNION")));
-        assert!(zones.contains(&entity::Zone::new("MARTINIQUE")));
-        assert!(zones.contains(&entity::Zone::new("MAYOTTE")));
-        assert!(zones.contains(&entity::Zone::new("NORMANDIE")));
-        assert!(zones.contains(&entity::Zone::new("NOUVELLE AQUITAINE")));
-        assert!(zones.contains(&entity::Zone::new("OCCITANIE")));
-        assert!(zones.contains(&entity::Zone::new("PAYS DE LA LOIRE")));
-        assert!(zones.contains(&entity::Zone::new("PROVENCE-ALPES-CÔTE D’AZUR")));
-        */
-    }
+        assert!(departs.contains(&entity::Department::new(
+            "15 Cantal",
+            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTAU15"
+        )));
 
-    #[actix_web::test]
-    #[should_panic]
-    async fn test_regions_scrap_dep_err() {
-        let competition: entity::Competition =
-            entity::Competition::new(constant::CHAMP_DEP, constant::CHAMP_DEP_URL);
+        assert!(departs.contains(&entity::Department::new(
+            "38 Isère",
+            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTRA38"
+        )));
 
-        scrap_regions(&competition).await;
-    }
+        assert!(departs.contains(&entity::Department::new(
+            "42 Loire",
+            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTRA42"
+        )));
 
-    #[actix_web::test]
-    #[should_panic]
-    async fn test_regions_scrap_nat_err() {
-        let competition: entity::Competition =
-            entity::Competition::new(constant::CHAMP_NAT, constant::CHAMP_NAT_URL);
+        assert!(departs.contains(&entity::Department::new(
+            "43 Haute Loire",
+            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTAU43"
+        )));
 
-        scrap_regions(&competition).await;
+        assert!(departs.contains(&entity::Department::new(
+            "63 Puy de Dôme",
+            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTAU63"
+        )));
+
+        assert!(departs.contains(&entity::Department::new(
+            "69 Rhône Métropole de Lyon",
+            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTRA69"
+        )));
     }
 
     #[actix_web::test]
