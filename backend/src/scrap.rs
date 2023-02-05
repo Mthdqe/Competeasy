@@ -206,6 +206,13 @@ pub async fn scrap_departments(
     /* Scrap the departments names of the region */
     let depart_name: Vec<String> = scraper.scrap_value("li a", HtmlType::InnerHtml);
 
+    /* If there is no department in this region, the department is the region */
+    let depart_name = if depart_name.len() == 1 {
+        vec![String::from(region.name())]
+    } else {
+        depart_name
+    };
+
     /* Scrap the departments urls of the region */
     let depart_urls: Vec<String> = scraper.scrap_value("li a", HtmlType::Href);
 
@@ -247,11 +254,39 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_departments_scrap() {
-        println!("Allooo");
+    async fn test_departments_scrap_simple() {
         let competition: entity::Competition =
             entity::Competition::new(constant::CHAMP_DEP, constant::CHAMP_DEP_URL);
+        let region: Vec<entity::Region> = scrap_regions(&competition).await;
+        let departs: Vec<entity::Department> = scrap_departments(&competition, &region[2]).await;
 
+        assert_eq!(departs.len(), 4);
+
+        assert!(departs.contains(&entity::Department::new(
+            "22 Côtes d'Armor",
+            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTBR22"
+        )));
+
+        assert!(departs.contains(&entity::Department::new(
+            "29 Finistère",
+            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTBR29"
+        )));
+
+        assert!(departs.contains(&entity::Department::new(
+            "35 Ille-et-Vilaine",
+            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTBR35"
+        )));
+
+        assert!(departs.contains(&entity::Department::new(
+            "56 Morbihan",
+            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTBR56"
+        )));
+    }
+
+    #[actix_web::test]
+    async fn test_departments_scrap_moderate() {
+        let competition: entity::Competition =
+            entity::Competition::new(constant::CHAMP_DEP, constant::CHAMP_DEP_URL);
         let region: Vec<entity::Region> = scrap_regions(&competition).await;
         let departs: Vec<entity::Department> = scrap_departments(&competition, &region[0]).await;
 
@@ -261,32 +296,26 @@ mod tests {
             "01 Ain",
             "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTRA01"
         )));
-
         assert!(departs.contains(&entity::Department::new(
             "07/26 Drôme-Ardèche",
             "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTRA26"
         )));
-
         assert!(departs.contains(&entity::Department::new(
             "15 Cantal",
             "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTAU15"
         )));
-
         assert!(departs.contains(&entity::Department::new(
             "38 Isère",
             "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTRA38"
         )));
-
         assert!(departs.contains(&entity::Department::new(
             "42 Loire",
             "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTRA42"
         )));
-
         assert!(departs.contains(&entity::Department::new(
             "43 Haute Loire",
             "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTAU43"
         )));
-
         assert!(departs.contains(&entity::Department::new(
             "63 Puy de Dôme",
             "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTAU63"
@@ -295,6 +324,34 @@ mod tests {
         assert!(departs.contains(&entity::Department::new(
             "69 Rhône Métropole de Lyon",
             "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=PTRA69"
+        )));
+    }
+
+    #[actix_web::test]
+    async fn test_departments_scrap_none() {
+        let competition: entity::Competition =
+            entity::Competition::new(constant::CHAMP_DEP, constant::CHAMP_DEP_URL);
+        let region: Vec<entity::Region> = scrap_regions(&competition).await;
+        let departs: Vec<entity::Department> = scrap_departments(&competition, &region[4]).await;
+
+        assert!(departs.len() == 0);
+    }
+
+    #[actix_web::test]
+    async fn test_departments_scrap_hard() {
+        let competition: entity::Competition =
+            entity::Competition::new(constant::CHAMP_DEP, constant::CHAMP_DEP_URL);
+        let region: Vec<entity::Region> = scrap_regions(&competition).await;
+        let departs: Vec<entity::Department> = scrap_departments(&competition, &region[6]).await;
+
+        assert!(departs.len() == 1);
+
+        println!("{}", departs[0].name());
+        println!("{}", departs[0].url());
+
+        assert!(departs.contains(&entity::Department::new(
+            "GUADELOUPE",
+            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LIGU"
         )));
     }
 
