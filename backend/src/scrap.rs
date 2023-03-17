@@ -1,3 +1,11 @@
+/**
+ * \file scrap.rs
+ *
+ * \brief Implements the scrap object to use the Scraper rust crate. The scraper
+ *        is used to retreive informations from the ffvb website.
+ *
+ * \author Mathieu Dique
+ */
 /* ------------------------------------------------------------------------- */
 use reqwest::*;
 use scraper::html::*;

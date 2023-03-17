@@ -1,3 +1,11 @@
+/**
+ * \file main.rs
+ *
+ * \brief Main file of the backend. It instantiates the server and creates the
+ *        different endpoints.
+ *
+ * \author Mathieu Dique
+ */
 /* -------------------------------------------------------------------------- */
 pub mod parse;
 pub mod scrap;
@@ -29,14 +37,30 @@ async fn get_competitions() -> impl Responder {
  * Regions endpoint, requires the region url
  */
 #[get("/regions")]
-async fn get_regions(url: web::Query<entity::Url>) -> impl Responder {
-    let regions: Vec<entity::Region> = parse::regions(&url.url()).await;
+async fn get_regions(region_query: web::Query<query::Region>) -> impl Responder {
+    let regions: Vec<entity::Region> = parse::regions(&region_query.url()).await;
 
     let regions_serialized: String = serde_json::to_string(&regions).unwrap();
 
     HttpResponse::Ok()
         .append_header(("Access-Control-Allow-Origin", "http://localhost:5173"))
         .body(regions_serialized)
+}
+
+/*
+ * Departments endpoint, requires the region url department url and the region
+ * name.
+ */
+#[get("/departments")]
+async fn get_departments(department_query: web::Query<query::Department>) -> impl Responder {
+    let departments: Vec<entity::Department> =
+        parse::departments(department_query.url(), department_query.region()).await;
+
+    let departments_serialized: String = serde_json::to_string(&departments).unwrap();
+
+    HttpResponse::Ok()
+        .append_header(("Access-Control-Allow-Origin", "http://localhost:5173"))
+        .body(departments_serialized)
 }
 
 /* Default response for 404 errors */
@@ -53,6 +77,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .service(get_competitions)
             .service(get_regions)
+            .service(get_departments)
             .default_service(web::to(|| handle_not_found()))
     };
     HttpServer::new(application)

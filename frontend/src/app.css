@@ -1,8 +1,15 @@
+/** \file app.css
+  * 
+  * \brief This file describe the global css applied everywhere in the website.
+  *
+  * \author Mathieu Dique
+*/
 html {
     background-color: var(--bg);
     color: var(--fg);
 }
 
+/* Theme */
 :root {
     --bg: #212121;
     --fg: #dbdbdb;

@@ -1,30 +1,30 @@
-<!-- 
-  -- \file Competition.svelte
+<!--
+  -- \file Region.svelte
   --
-  -- \brief This filte describe the Competition component , it allows to spawn
-  --        a button with the name of the Competition which can be clicked to
-  --        retrieve the regions of this competition.
+  -- \brief This filte describe the Region component , it allows to spawn
+  --        a button with the name of the Region which can be clicked to
+  --        retrieve the departments of this region.
   --
   -- \author Mathieu Dique
   -->
 <script>
     /* Requests */
-    import { get_regions } from "../requests";
+    import { get_departments } from "../requests";
 
     /* Component properties */
     export let name = "";
     export let url = "";
-    export let regions = [];
+    export let departments = [];
 
-    /* Component comportment */
-    async function get_regions_wrapper() {
-        regions = await get_regions(url);
+    /* Comportment of the component */
+    async function get_departments_wrapper() {
+        departments = await get_departments(url, name);
     }
 </script>
 
 <!----------------------------------------------------------------------------->
 <div>
-    <button on:click={get_regions_wrapper}>
+    <button on:click={get_departments_wrapper}>
         <p>{name}</p>
     </button>
 </div>

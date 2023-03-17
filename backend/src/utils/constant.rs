@@ -1,9 +1,9 @@
 /**
- * \brief  Contains constants to describe names and urls
+ * \file const.rs
  *
- * \file   const.rs
- * \author Dique Mathieu
- * \date   January, 30 2023
+ * \brief Contains constants to describe names and urls
+ *
+ * \author Mathieu Dique
  */
 /* -------------------------------------------------------------------------- */
 pub const CHAMP_NAT: &str = "Championnats Nationnaux";

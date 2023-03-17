@@ -1,47 +1,62 @@
+<!-- 
+  -- \file App.svelte
+  --
+  -- \brief This filte is the main component of the website, it regroups the
+  --        different components of the application to make it works.
+  --
+  -- \author Mathieu Dique
+  -->
 <script>
+    /* Requests */
+    import { get_competitions } from "./requests";
+
+    /* Svelte components */
     import Competition from "./components/Competition.svelte";
-    import Match from "./components/Match.svelte";
+    import Region from "./components/Region.svelte";
+    import { onMount } from "svelte";
+    import Department from "./components/Department.svelte";
 
-    let matchs = [];
-
+    /* Hold the elements sent by the backend */
     let competitions = [];
+    let regions = [];
+    let departments = [];
 
-    let team = "";
+    /* Once the page pop-up, we get the different available competitions */
+    onMount(async () => {
+        competitions = await get_competitions();
+    });
 
-    function onClick() {
-        let uri = "http://localhost:8000/competitions";
-        fetch(uri).then((response) => {
-            response.json().then((json) => {
-                competitions = json;
-            });
-        });
-    }
+    /* Reactive code to empty the lists so that they don't display if required */
+    $: if (regions.length != 0) competitions = [];
+    $: if (departments.length != 0) regions = [];
 </script>
 
+<!----------------------------------------------------------------------------->
 <main>
-    <div id="input">
-        <input type="value" bind:value={team} />
-        <button on:click={onClick}>Get</button>
-    </div>
     <div class="list">
-        {#each matchs as match}
-            <Match
-                first_team={match.first_team}
-                second_team={match.second_team}
-                date={match.date}
-                hour={match.hour}
-                place={match.place}
-                match_score={match.match_score}
+        {#each competitions as competition}
+            <Competition
+                name={competition.name}
+                url={competition.url}
+                bind:regions
             />
         {/each}
     </div>
+
     <div class="list">
-        {#each competitions as competition}
-            <Competition name={competition.name} url={competition.url} />
+        {#each regions as region}
+            <Region name={region.name} url={region.url} bind:departments />
+        {/each}
+    </div>
+
+    <div class="list">
+        {#each departments as department}
+            <Department name={department.name} url={department.url} />
         {/each}
     </div>
 </main>
 
+<!----------------------------------------------------------------------------->
 <style>
     main {
         width: 1200px;

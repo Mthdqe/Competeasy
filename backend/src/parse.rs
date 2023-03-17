@@ -1,3 +1,12 @@
+/**
+ * \file parse.rs
+ *
+ * \brief File implementing the parser thanks to the scraper. It is supposed
+ *        to implement functions that call the scraper to retreives the required
+ *        data.
+ *
+ * \author Mathieu Dique
+ */
 /* ------------------------------------------------------------------------- */
 use crate::scrap::*;
 use crate::utils::*;
@@ -47,12 +56,9 @@ pub async fn regions(url: &str) -> Vec<entity::Region> {
     /* Scrap the region names */
     let names: Vec<String> = scraper.scrap_value("thead tr td", HtmlType::InnerHtml);
 
-    /* Scrap the region pools url */
-    let pools: Vec<String> = scraper.scrap_value("tbody tr td ul li a", HtmlType::Href);
-
     /* Build the vector of regions */
-    for i in 0..std::cmp::min(names.len(), pools.len()) {
-        regions.push(entity::Region::new(&names[i], &pools[i]));
+    for i in 0..names.len() {
+        regions.push(entity::Region::new(&names[i], url));
     }
 
     regions
@@ -141,6 +147,7 @@ mod tests {
         let departs: Vec<entity::Department> =
             parse::departments(competition.url(), region[2].name()).await;
 
+        assert_eq!(competition.url(), region[2].url());
         assert_eq!(departs.len(), 4);
 
         assert!(departs.contains(&entity::Department::new(
@@ -250,75 +257,45 @@ mod tests {
 
         assert!(regions.contains(&entity::Region::new(
             "AUVERGNE-RHÔNE-ALPES",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LIRA"
+            constant::CHAMP_REG_URL
         )));
         assert!(regions.contains(&entity::Region::new(
             "BOURGOGNE-FRANCHE-COMTE",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LIBOUR"
+            constant::CHAMP_REG_URL
         )));
-        assert!(regions.contains(&entity::Region::new(
-            "BRETAGNE",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LIBR"
-        )));
+        assert!(regions.contains(&entity::Region::new("BRETAGNE", constant::CHAMP_REG_URL)));
         assert!(regions.contains(&entity::Region::new(
             "CENTRE-VAL DE LOIRE",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LICE"
+            constant::CHAMP_REG_URL
         )));
-        assert!(regions.contains(&entity::Region::new(
-            "CORSE",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LICO"
-        )));
-        assert!(regions.contains(&entity::Region::new(
-            "GRAND EST",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LILO"
-        )));
-        assert!(regions.contains(&entity::Region::new(
-            "GUADELOUPE",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LIGU"
-        )));
-        assert!(regions.contains(&entity::Region::new(
-            "GUYANE",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LIGY"
-        )));
+        assert!(regions.contains(&entity::Region::new("CORSE", constant::CHAMP_REG_URL)));
+        assert!(regions.contains(&entity::Region::new("GRAND EST", constant::CHAMP_REG_URL)));
+        assert!(regions.contains(&entity::Region::new("GUADELOUPE", constant::CHAMP_REG_URL)));
+        assert!(regions.contains(&entity::Region::new("GUYANE", constant::CHAMP_REG_URL)));
         assert!(regions.contains(&entity::Region::new(
             "HAUTS-DE-FRANCE",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LIFL"
+            constant::CHAMP_REG_URL
         )));
         assert!(regions.contains(&entity::Region::new(
             "ILE-DE-FRANCE",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LIIDF"
+            constant::CHAMP_REG_URL
         )));
-        assert!(regions.contains(&entity::Region::new(
-            "LA REUNION",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LIRE"
-        )));
-        assert!(regions.contains(&entity::Region::new(
-            "MARTINIQUE",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LIMART"
-        )));
-        assert!(regions.contains(&entity::Region::new(
-            "MAYOTTE",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LIMY"
-        )));
-        assert!(regions.contains(&entity::Region::new(
-            "NORMANDIE",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LILBNV"
-        )));
+        assert!(regions.contains(&entity::Region::new("LA REUNION", constant::CHAMP_REG_URL)));
+        assert!(regions.contains(&entity::Region::new("MARTINIQUE", constant::CHAMP_REG_URL)));
+        assert!(regions.contains(&entity::Region::new("MAYOTTE", constant::CHAMP_REG_URL)));
+        assert!(regions.contains(&entity::Region::new("NORMANDIE", constant::CHAMP_REG_URL)));
         assert!(regions.contains(&entity::Region::new(
             "NOUVELLE AQUITAINE",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LIAQ"
+            constant::CHAMP_REG_URL
         )));
-        assert!(regions.contains(&entity::Region::new(
-            "OCCITANIE",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LILR"
-        )));
+        assert!(regions.contains(&entity::Region::new("OCCITANIE", constant::CHAMP_REG_URL)));
         assert!(regions.contains(&entity::Region::new(
             "PAYS DE LA LOIRE",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LIPL"
+            constant::CHAMP_REG_URL
         )));
         assert!(regions.contains(&entity::Region::new(
             "PROVENCE-ALPES-CÔTE D’AZUR",
-            "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_home.php?codent=LICA"
+            constant::CHAMP_REG_URL
         )));
     }
 }

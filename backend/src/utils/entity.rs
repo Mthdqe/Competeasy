@@ -1,9 +1,9 @@
 /**
+ * \file entity.rs
+ *
  * \brief  Data that are computed by the scraper
  *
- * \file   entity.rs
- * \author Dique Mathieu
- * \data   January, 30 2023
+ * \author Mathieu Dique
  */
 /* -------------------------------------------------------------------------- */
 use derive_getters::Getters;
@@ -75,27 +75,6 @@ impl Region {
     pub fn new(name: &str, url: &str) -> Region {
         Region {
             name: String::from(name),
-            url: String::from(url),
-        }
-    }
-}
-
-/* -------------------------------------------------------------------------- */
-/** \struct Url
- *  \brief  entity describing a queried Url
- */
-#[derive(Deserialize, Serialize, PartialEq, Getters)]
-pub struct Url {
-    url: String, /*< Url value */
-}
-
-impl Url {
-    /**
-     * \brief Constructor of the Url entity
-     * \param url The url value
-     */
-    pub fn new(url: &str) -> Url {
-        Url {
             url: String::from(url),
         }
     }
