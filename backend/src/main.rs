@@ -16,7 +16,7 @@ use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
  */
 #[get("/competitions")]
 async fn get_competitions() -> impl Responder {
-    let competitions = parse::competitions();
+    let competitions: Vec<entity::Competition> = parse::competitions();
 
     let competitions_serialized: String = serde_json::to_string(&competitions).unwrap();
 
@@ -29,11 +29,8 @@ async fn get_competitions() -> impl Responder {
  * Regions endpoint, requires the region url
  */
 #[get("/regions")]
-async fn get_regions(url: web::Query<entity::Url>) -> impl Responder {
-    let competition: entity::Competition =
-        entity::Competition::new(constant::CHAMP_DEP, &url.value());
-
-    let regions = parse::regions(competition.url()).await;
+async fn get_regions(url: web::Query<String>) -> impl Responder {
+    let regions: Vec<entity::Region> = parse::regions(&url).await;
 
     let regions_serialized: String = serde_json::to_string(&regions).unwrap();
 

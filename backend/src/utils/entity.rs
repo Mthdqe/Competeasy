@@ -79,24 +79,3 @@ impl Region {
         }
     }
 }
-
-/* -------------------------------------------------------------------------- */
-/** \struct Url
- *  \brief  Entity of an Url to be queried by the backend
- */
-#[derive(Deserialize, Serialize, PartialEq, Getters)]
-pub struct Url {
-    value: String, /*< Value of the Url */
-}
-
-impl Url {
-    /**
-     * \brief Constructor of the Url entity
-     * \param value Value of the url
-     */
-    pub fn new(value: &str) -> Url {
-        Url {
-            value: String::from(value),
-        }
-    }
-}
