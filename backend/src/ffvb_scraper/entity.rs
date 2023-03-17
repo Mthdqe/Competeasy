@@ -7,12 +7,13 @@
  */
 /* -------------------------------------------------------------------------- */
 use derive_getters::Getters;
+use serde::{Deserialize, Serialize};
 
 /* -------------------------------------------------------------------------- */
 /** \struct Competition
  *  \brief  Entity describing a scraped competition
  */
-#[derive(PartialEq, Getters)]
+#[derive(Deserialize, Serialize, PartialEq, Getters)]
 pub struct Competition {
     name: String, /*< The name of the competition */
     url: String,  /*< The url to follow the competition in the web page */
@@ -35,7 +36,7 @@ impl Competition {
 /** \struct Department
  *  \brief  Entity describing a scraped department
  */
-#[derive(PartialEq, Getters)]
+#[derive(Deserialize, Serialize, PartialEq, Getters)]
 pub struct Department {
     name: String, /*< The name of the department */
     url: String,  /*< Url of the pools of the department */
@@ -59,7 +60,7 @@ impl Department {
 /** \struct Region
  *  \brief  Entity describing a scraped region
  */
-#[derive(PartialEq, Getters)]
+#[derive(Deserialize, Serialize, PartialEq, Getters)]
 pub struct Region {
     name: String, /*< The name of the region */
     url: String,  /*< Url of the pools */
@@ -75,6 +76,27 @@ impl Region {
         Region {
             name: String::from(name),
             url: String::from(url),
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/** \struct Url
+ *  \brief  Entity of an Url to be queried by the backend
+ */
+#[derive(Deserialize, Serialize, PartialEq, Getters)]
+pub struct Url {
+    value: String, /*< Value of the Url */
+}
+
+impl Url {
+    /**
+     * \brief Constructor of the Url entity
+     * \param value Value of the url
+     */
+    pub fn new(value: &str) -> Url {
+        Url {
+            value: String::from(value),
         }
     }
 }

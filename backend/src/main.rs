@@ -1,43 +1,44 @@
-pub mod backend;
+pub mod ffvb_scraper;
+
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
-use backend::Worker;
-pub mod scrap;
+use ffvb_scraper::*;
 
-/* Hello endpoint (Testing purposes) */
-#[get("/hello")]
-async fn hello() -> impl Responder {
-    /* Returns a 200 response with 'Hello World' as body */
-    HttpResponse::Ok().body("Hello World!")
-}
+/*
+ * Competitions endpoint, do not take any argument as competitions are hard
+ * coded
+ */
+#[get("/competitions")]
+async fn get_competitions() -> impl Responder {
+    let competitions = scrap_competitions();
 
-/* Matchs endpoint, take a team name as argument */
-#[get("/matchs/{team}")]
-async fn get_matchs(path: web::Path<String>) -> impl Responder {
-    /* Uri of the ffvb website */
-    let ffvb_uri: &str = "https://www.ffvbbeach.org/ffvbapp/resu/vbspo_calendrier.php?saison=2022/2023&codent=LIIDF&poule=RMA";
+    let competitions_serialized: String = serde_json::to_string(&competitions).unwrap();
 
-    /* Gets the name of the team from the uri */
-    let team: String = path.into_inner();
-
-    /* Build a scrapping worker */
-    let worker: Worker = Worker::new(ffvb_uri).await;
-
-    /* Scrap the matchs */
-    let matchs = worker.scrap_matchs(&team);
-
-    /* Serialize the matchs vector */
-    let matchs_serialized: String = serde_json::to_string(&matchs).unwrap();
-
-    /* Returns a 200 response with the serialized matchs as body */
     HttpResponse::Ok()
         .append_header(("Access-Control-Allow-Origin", "http://localhost:5173"))
-        .body(matchs_serialized)
+        .body(competitions_serialized)
+}
+
+/*
+ * Regions endpoint, requires the region url
+ */
+#[get("/regions")]
+async fn get_regions(url: web::Query<entity::Url>) -> impl Responder {
+    let competition: entity::Competition =
+        entity::Competition::new(constant::CHAMP_DEP, &url.value());
+
+    let regions = scrap_regions(&competition).await;
+
+    let regions_serialized: String = serde_json::to_string(&regions).unwrap();
+
+    HttpResponse::Ok()
+        .append_header(("Access-Control-Allow-Origin", "http://localhost:5173"))
+        .body(regions_serialized)
 }
 
 /* Main: Creates a web server exposing endpoints */
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let application = || App::new().service(hello).service(get_matchs);
+    let application = || App::new().service(get_competitions).service(get_regions);
     HttpServer::new(application)
         .bind(("127.0.0.1", 8000))?
         .run()

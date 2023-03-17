@@ -1,20 +1,10 @@
-mod constant;
-/**
- * \brief  Scraper class to get values from FFVB website
- *
- * \file   scrap.rs
- * \author Dique Mathieu
- * \date   January, 29th 2023
- */
-/* ------------------------------------------------------------------------- */
-mod entity;
+pub mod constant;
+pub mod entity;
 
 /* ------------------------------------------------------------------------- */
 use reqwest::*;
 use scraper::html::*;
 use scraper::*;
-
-use self::entity::Department;
 
 /* ------------------------------------------------------------------------- */
 /** \enum  HtmlType
@@ -218,7 +208,7 @@ pub async fn scrap_departments(
 
     /* Build the department vector */
     for i in 0..depart_name.len() {
-        departs.push(Department::new(&depart_name[i], &depart_urls[i]));
+        departs.push(entity::Department::new(&depart_name[i], &depart_urls[i]));
     }
 
     departs
@@ -230,7 +220,7 @@ pub async fn scrap_departments(
 /* ------------------------------------------------------------------------- */
 #[cfg(test)]
 mod tests {
-    use crate::scrap::*;
+    use crate::ffvb_scraper::*;
 
     #[test]
     fn test_competitions_scrap() {
