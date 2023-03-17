@@ -1,15 +1,22 @@
-pub mod ffvb_scraper;
+/* -------------------------------------------------------------------------- */
+pub mod parse;
+pub mod scrap;
+pub mod utils;
 
+/* -------------------------------------------------------------------------- */
+use crate::utils::*;
+
+/* -------------------------------------------------------------------------- */
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
-use ffvb_scraper::*;
 
+/* -------------------------------------------------------------------------- */
 /*
  * Competitions endpoint, do not take any argument as competitions are hard
  * coded
  */
 #[get("/competitions")]
 async fn get_competitions() -> impl Responder {
-    let competitions = scrap_competitions();
+    let competitions = parse::competitions();
 
     let competitions_serialized: String = serde_json::to_string(&competitions).unwrap();
 
@@ -26,7 +33,7 @@ async fn get_regions(url: web::Query<entity::Url>) -> impl Responder {
     let competition: entity::Competition =
         entity::Competition::new(constant::CHAMP_DEP, &url.value());
 
-    let regions = scrap_regions(&competition).await;
+    let regions = parse::regions(competition.url()).await;
 
     let regions_serialized: String = serde_json::to_string(&regions).unwrap();
 

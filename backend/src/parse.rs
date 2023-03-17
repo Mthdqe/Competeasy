@@ -1,109 +1,6 @@
-pub mod constant;
-pub mod entity;
-
 /* ------------------------------------------------------------------------- */
-use reqwest::*;
-use scraper::html::*;
-use scraper::*;
-
-/* ------------------------------------------------------------------------- */
-/** \enum  HtmlType
- *  \brief Enumerate the different kind of values that can be scraped from html
- */
-pub enum HtmlType {
-    InnerHtml, /*< The value is the internal text between two html balises */
-    Href,      /*< The value of a link */
-}
-
-/* ------------------------------------------------------------------------- */
-/**
- * \struct Scraper
- * \brief  Scraper structure that is built around the scraping library
- */
-pub struct Scraper {
-    doc: Html, /*< The document representing the scraped web page */
-}
-
-/* ------------------------------------------------------------------------- */
-impl Scraper {
-    /**
-     * \brief Scraper structure constructor
-     * \param uri The uri of the web page to scrap
-     */
-    pub async fn new(uri: &str) -> Scraper {
-        /* Create the client builder, accept invalid_certificates */
-        let builder: ClientBuilder = ClientBuilder::new().danger_accept_invalid_certs(true);
-
-        /* Build the client */
-        let client: Client = builder.build().unwrap();
-
-        /* Get the html content as a String and block to avoid async */
-        let html: String = client.get(uri).send().await.unwrap().text().await.unwrap();
-
-        Scraper {
-            doc: Html::parse_document(&html), /* Parse the html document */
-        }
-    }
-
-    /**
-     * \brief Replace the actual doc of the scraper by a fragment of Html
-     * \param fragment The fragment of html to parse that will replace the actual doc
-     */
-    pub fn new_fragment(&mut self, fragment: &String) {
-        self.doc = Html::parse_fragment(fragment);
-    }
-
-    /**
-     *  \brief Parse the inner html of an ElementRef
-     *  \param elt_ref The ElementRef to parse
-     *  \return String The inner html of this element ref
-     */
-    fn parse_inner_html(elt_ref: &ElementRef) -> String {
-        elt_ref.inner_html()
-    }
-
-    /**
-     *  \brief Parse the href value of an ElementRef
-     *  \param elt_ref The ElementRef to parse
-     *  \return String The href value of the ElementRef
-     */
-    fn parse_href(elt_ref: &ElementRef) -> String {
-        String::from(elt_ref.value().attr("href").unwrap())
-    }
-
-    /**
-     * \brief  Scrap the sequence and gets the asked value
-     * \param  sequence The sequence to parse from the document
-     * \param  html_type The type of value we want to scrap
-     * \return Vec<String> The list of content parsed from the sequence
-     */
-    pub fn scrap_value(&self, sequence: &str, html_type: HtmlType) -> Vec<String> {
-        /* Create the selector of the given sequence */
-        let selector: Selector = Selector::parse(sequence).unwrap();
-
-        /* Select the right parsing function depending on the type we want
-         * to parse */
-        let parsing_func = match html_type {
-            HtmlType::InnerHtml => |x| Scraper::parse_inner_html(&x),
-            HtmlType::Href => |x| Scraper::parse_href(&x),
-        };
-
-        /* Parse the sequence from the document */
-        self.doc
-            .select(&selector)
-            .map(|x| parsing_func(x))
-            .collect()
-    }
-
-    /**
-     * \brief  Scrap the sequence and returns the sraped selector
-     * \param  sequence The sequence to parse from the document
-     * \return Selector The scraped selector to pursue the scraping
-     */
-    pub fn scrap(&self, sequence: &str) -> Selector {
-        Selector::parse(sequence).unwrap()
-    }
-}
+use crate::scrap::*;
+use crate::utils::*;
 
 /* ------------------------------------------------------------------------- */
 /**
@@ -111,7 +8,7 @@ impl Scraper {
  *        competitions to check
  * \return Vec<entity::Competition> The list of competitions
  */
-pub fn scrap_competitions() -> Vec<entity::Competition> {
+pub fn competitions() -> Vec<entity::Competition> {
     let mut competitions: Vec<entity::Competition> = Vec::new();
 
     /* This function is hardcoded as we only want to manage some competitions */
@@ -140,12 +37,12 @@ pub fn scrap_competitions() -> Vec<entity::Competition> {
  * \param competition The competition to get the regions from
  * \return Vec<entity::Region> The list of the regions of the matching competition
  */
-pub async fn scrap_regions(competition: &entity::Competition) -> Vec<entity::Region> {
+pub async fn regions(url: &str) -> Vec<entity::Region> {
     /* Instanciate the return vector */
     let mut regions: Vec<entity::Region> = Vec::new();
 
     /* Instanciate the Scraper */
-    let scraper: Scraper = Scraper::new(competition.url()).await;
+    let scraper: Scraper = Scraper::new(&url).await;
 
     /* Scrap the region names */
     let names: Vec<String> = scraper.scrap_value("thead tr td", HtmlType::InnerHtml);
@@ -161,30 +58,25 @@ pub async fn scrap_regions(competition: &entity::Competition) -> Vec<entity::Reg
     regions
 }
 
+/* ------------------------------------------------------------------------- */
 /**
  * \brief  Scrap the departments of the given competition in the given region
  * \param  competition The Competition from which scrap the departments
  * \param  region The region from which scrap the departements
  * \return Vec<entity::Department> The list of scraped departments
  */
-pub async fn scrap_departments(
-    competition: &entity::Competition,
-    region: &entity::Region,
-) -> Vec<entity::Department> {
+pub async fn departments(url: &str, region: &str) -> Vec<entity::Department> {
     /* Instanciate the vector of departments */
     let mut departs: Vec<entity::Department> = Vec::new();
 
     /* Instanciate the scraper */
-    let mut scraper: Scraper = Scraper::new(competition.url()).await;
+    let mut scraper: Scraper = Scraper::new(url).await;
 
     /* Scrap the different region names */
     let region_names: Vec<String> = scraper.scrap_value("thead tr td", HtmlType::InnerHtml);
 
     /* Find the index of the region in the different tables */
-    let region_index: usize = region_names
-        .iter()
-        .position(|x| x.eq(region.name()))
-        .unwrap();
+    let region_index: usize = region_names.iter().position(|x| x.eq(region)).unwrap();
 
     /* Scrap the content of each region */
     let region_departs: Vec<String> =
@@ -198,7 +90,7 @@ pub async fn scrap_departments(
 
     /* If there is no department in this region, the department is the region */
     let depart_name = if depart_name.len() == 1 {
-        vec![String::from(region.name())]
+        vec![String::from(region)]
     } else {
         depart_name
     };
@@ -214,17 +106,15 @@ pub async fn scrap_departments(
     departs
 }
 
-/**
- * \brief Scrap the different
- */
 /* ------------------------------------------------------------------------- */
 #[cfg(test)]
 mod tests {
-    use crate::ffvb_scraper::*;
+    use crate::utils::*;
+    use crate::*;
 
     #[test]
     fn test_competitions_scrap() {
-        let competitions: Vec<entity::Competition> = scrap_competitions();
+        let competitions: Vec<entity::Competition> = parse::competitions();
         assert_eq!(competitions.len(), 3);
 
         assert!(competitions.contains(&entity::Competition::new(
@@ -247,8 +137,9 @@ mod tests {
     async fn test_departments_scrap_simple() {
         let competition: entity::Competition =
             entity::Competition::new(constant::CHAMP_DEP, constant::CHAMP_DEP_URL);
-        let region: Vec<entity::Region> = scrap_regions(&competition).await;
-        let departs: Vec<entity::Department> = scrap_departments(&competition, &region[2]).await;
+        let region: Vec<entity::Region> = parse::regions(competition.url()).await;
+        let departs: Vec<entity::Department> =
+            parse::departments(competition.url(), region[2].name()).await;
 
         assert_eq!(departs.len(), 4);
 
@@ -277,8 +168,9 @@ mod tests {
     async fn test_departments_scrap_moderate() {
         let competition: entity::Competition =
             entity::Competition::new(constant::CHAMP_DEP, constant::CHAMP_DEP_URL);
-        let region: Vec<entity::Region> = scrap_regions(&competition).await;
-        let departs: Vec<entity::Department> = scrap_departments(&competition, &region[0]).await;
+        let region: Vec<entity::Region> = parse::regions(competition.url()).await;
+        let departs: Vec<entity::Department> =
+            parse::departments(competition.url(), region[0].name()).await;
 
         assert_eq!(departs.len(), 8);
 
@@ -321,8 +213,9 @@ mod tests {
     async fn test_departments_scrap_none() {
         let competition: entity::Competition =
             entity::Competition::new(constant::CHAMP_DEP, constant::CHAMP_DEP_URL);
-        let region: Vec<entity::Region> = scrap_regions(&competition).await;
-        let departs: Vec<entity::Department> = scrap_departments(&competition, &region[4]).await;
+        let region: Vec<entity::Region> = parse::regions(competition.url()).await;
+        let departs: Vec<entity::Department> =
+            parse::departments(competition.url(), region[4].name()).await;
 
         assert!(departs.len() == 0);
     }
@@ -331,8 +224,9 @@ mod tests {
     async fn test_departments_scrap_hard() {
         let competition: entity::Competition =
             entity::Competition::new(constant::CHAMP_DEP, constant::CHAMP_DEP_URL);
-        let region: Vec<entity::Region> = scrap_regions(&competition).await;
-        let departs: Vec<entity::Department> = scrap_departments(&competition, &region[6]).await;
+        let region: Vec<entity::Region> = parse::regions(competition.url()).await;
+        let departs: Vec<entity::Department> =
+            parse::departments(competition.url(), region[6].name()).await;
 
         assert!(departs.len() == 1);
 
@@ -350,7 +244,7 @@ mod tests {
         let competition: entity::Competition =
             entity::Competition::new(constant::CHAMP_REG, constant::CHAMP_REG_URL);
 
-        let regions: Vec<entity::Region> = scrap_regions(&competition).await;
+        let regions: Vec<entity::Region> = parse::regions(competition.url()).await;
 
         assert_eq!(regions.len(), 18);
 
