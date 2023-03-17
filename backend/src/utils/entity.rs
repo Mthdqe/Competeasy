@@ -57,8 +57,8 @@ impl Department {
 }
 
 /* -------------------------------------------------------------------------- */
-/** \struct Region
- *  \brief  Entity describing a scraped region
+/** \struct region
+ *  \brief  entity describing a scraped region
  */
 #[derive(Deserialize, Serialize, PartialEq, Getters)]
 pub struct Region {
@@ -75,6 +75,27 @@ impl Region {
     pub fn new(name: &str, url: &str) -> Region {
         Region {
             name: String::from(name),
+            url: String::from(url),
+        }
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/** \struct Url
+ *  \brief  entity describing a queried Url
+ */
+#[derive(Deserialize, Serialize, PartialEq, Getters)]
+pub struct Url {
+    url: String, /*< Url value */
+}
+
+impl Url {
+    /**
+     * \brief Constructor of the Url entity
+     * \param url The url value
+     */
+    pub fn new(url: &str) -> Url {
+        Url {
             url: String::from(url),
         }
     }
