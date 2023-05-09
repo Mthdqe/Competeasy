@@ -6,6 +6,8 @@
  * \author Mathieu Dique
  */
 
+import { Competition } from "./constant";
+
 /* -------------------------------------------------------------------------- */
 /**
  * @brief Makes a request to the COMPETITIONS endpoint

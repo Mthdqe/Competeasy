@@ -5,13 +5,21 @@
   * \author Mathieu Dique
 */
 html {
-    background-color: var(--bg);
-    color: var(--fg);
+  background-color: var(--bg);
+  color: var(--fg);
 }
 
 /* Theme */
 :root {
-    --bg: #212121;
-    --fg: #dbdbdb;
-    --blue: #2f819c;
+  --bg: #0d1117;
+  --fg: #ecf2f8;
+  --blue: #77bdfb;
+  --lightblue: #a2d2fb;
+  --green: #7ce38b;
+  --orange: #faa356;
+  --red: #fa7970;
+  --purple: #cea5fb;
+  --darkgrey: #21262d;
+  --grey: #89929b;
+  --dark: #161b22;
 }

@@ -6,9 +6,9 @@
  * \author Mathieu Dique
  */
 /* -------------------------------------------------------------------------- */
-pub const CHAMP_NAT: &str = "Championnats Nationnaux";
-pub const CHAMP_REG: &str = "Championnats Régionnaux";
-pub const CHAMP_DEP: &str = "Championnats Départementaux";
+pub const CHAMP_NAT: &str = "National";
+pub const CHAMP_REG: &str = "Régional";
+pub const CHAMP_DEP: &str = "Départemental";
 
 /* -------------------------------------------------------------------------- */
 pub const CHAMP_NAT_URL: &str =
