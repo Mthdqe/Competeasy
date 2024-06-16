@@ -1,2 +1,2 @@
-# CompetEasy
-FFVB website scraper to facilitate ffvb competitions researches.
+# ELOV (Enhance Life Of Volleyers)
+FFVB website scraper to facilitate volley-ball players navigation accross the FFVB website.
